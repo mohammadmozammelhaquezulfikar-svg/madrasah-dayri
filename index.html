@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>মাদ্রাসা ডায়েরি</title>
+
+<meta name="theme-color" content="#1a6b3c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="মাদ্রাসা ডায়েরি">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green: #1a6b3c; --green2: #22883f; --light: #e8f5ee;
+  --red: #c0392b; --border: #2a7a4a; --bg: #f5faf7;
+  --white: #fff; --gray: #888; --text: #111;
+}
+body { font-family: 'Hind Siliguri', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.app-header { background: var(--green); color: white; padding: 12px 16px 10px; text-align: center; }
+.app-header h1 { font-size: 19px; font-weight: 700; }
+.app-header p { font-size: 12px; opacity: .8; margin-top: 2px; }
+
+.offline-bar { background: #fff3cd; color: #856404; text-align: center; font-size: 12px; font-weight: 600; padding: 6px; display: none; }
+.offline-bar.show { display: block; }
+.online-bar { background: #d1fae5; color: #065f46; text-align: center; font-size: 12px; font-weight: 600; padding: 6px; display: none; }
+.online-bar.show { display: block; }
+
+.duty-banner { padding: 9px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; background: #fff8e1; border-bottom: 2px solid #f39c12; color: #7a4f00; }
+.duty-icon { font-size: 18px; }
+
+.tab-bar { display: flex; background: #155a30; overflow-x: auto; scrollbar-width: none; }
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn { flex: 1; min-width: 56px; padding: 10px 4px; color: rgba(255,255,255,.65); font-family: 'Hind Siliguri', sans-serif; font-size: 12px; font-weight: 600; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all .15s; }
+.tab-btn.active { color: #fff; border-bottom-color: #5ddf8f; background: rgba(255,255,255,.08); }
+
+.form-area { padding: 12px; max-width: 540px; margin: 0 auto; }
+
+.top-row { background: white; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.class-badge { background: var(--green); color: white; font-size: 15px; font-weight: 700; padding: 6px 12px; border-radius: 6px; white-space: nowrap; }
+.day-date { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.day-group { display: flex; gap: 4px; flex-wrap: wrap; }
+.day-label { display: flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.day-label input[type=radio] { accent-color: var(--green); width: 14px; height: 14px; }
+.date-input { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+.date-input input[type=date] { border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 6px; font-family: 'Hind Siliguri', sans-serif; font-size: 12px; outline: none; color: var(--red); font-weight: 700; }
+
+/* TABLE */
+.diary-table { width: 100%; border-collapse: collapse; background: white; border: 2px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+.diary-table th { background: var(--green); color: white; font-size: 11px; font-weight: 700; padding: 8px 4px; text-align: center; border: 1px solid #1a8040; line-height: 1.3; }
+.diary-table td { border: 1px solid #b8d9c5; padding: 0; vertical-align: middle; }
+.cell-num { text-align: center; font-weight: 700; color: var(--green); padding: 4px 2px; background: #f0faf5; font-size: 12px; }
+.cell-subject { padding: 5px 6px; font-size: 11px; font-weight: 600; background: #f8fdf9; line-height: 1.4; }
+.diary-table tr:nth-child(odd) .cell-subject { background: #f0faf5; }
+
+.cell-input textarea {
+  width: 100%; border: none; outline: none; padding: 5px 6px;
+  font-family: 'Hind Siliguri', sans-serif; font-size: 12px;
+  color: var(--red); font-weight: 600; resize: none; min-height: 38px;
+  background: transparent; line-height: 1.4;
+}
+
+/* 3 checkboxes column */
+.cell-checks { padding: 4px 3px; vertical-align: middle; }
+.three-checks { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.chk-label {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 600; cursor: pointer;
+  white-space: nowrap; color: #333; line-height: 1.2;
+}
+.chk-label input[type=checkbox] { width: 13px; height: 13px; flex-shrink: 0; cursor: pointer; }
+.chk-label.both input { accent-color: #1a6b3c; }
+.chk-label.read input { accent-color: #2980b9; }
+.chk-label.write input { accent-color: #8e44ad; }
+
+.footer-row td { text-align: center; font-size: 10px; color: var(--gray); padding: 5px; background: #f5f5f5; font-style: italic; }
+
+/* NOTICE */
+.notice-card { background: white; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+.notice-head { background: #fff3cd; padding: 7px 12px; font-size: 12px; font-weight: 700; color: #7a5c00; }
+.notice-body { padding: 8px 12px; }
+.notice-body textarea { width: 100%; border: 1.5px solid #ddd; border-radius: 6px; padding: 7px 10px; font-family: 'Hind Siliguri', sans-serif; font-size: 12px; resize: none; min-height: 50px; outline: none; color: #333; }
+.notice-body textarea:focus { border-color: var(--green); }
+
+/* PENDING */
+.pending-card { background: #fff8e1; border: 1.5px solid #f39c12; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; display: none; }
+.pending-card.show { display: block; }
+.pending-title { font-size: 12px; font-weight: 700; color: #7a4f00; margin-bottom: 6px; }
+.pending-item { display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 6px; padding: 7px 10px; margin-bottom: 5px; font-size: 12px; }
+.pending-item .p-info { color: #333; font-weight: 600; }
+.pending-item .p-send { background: #25D366; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-family: 'Hind Siliguri', sans-serif; font-weight: 700; cursor: pointer; }
+
+/* TEACHER */
+.teacher-panel { background: white; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+.teacher-head { background: var(--green); color: white; padding: 8px 12px; font-size: 12px; font-weight: 700; }
+.teacher-list { padding: 8px 12px; }
+.teacher-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #eee; font-size: 12px; }
+.teacher-item:last-child { border-bottom: none; }
+.t-name { font-weight: 600; }
+.t-week { font-size: 11px; color: var(--gray); }
+.t-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+.t-badge.current { background: #d1fae5; color: #065f46; }
+.t-badge.upcoming { background: #e8f5ee; color: var(--green); }
+
+/* PREVIEW */
+.preview-wrap { background: var(--light); border-left: 4px solid var(--green); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.preview-label { font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.preview-text { font-size: 12px; line-height: 1.8; white-space: pre-wrap; color: #222; }
+
+/* BUTTONS */
+.btn-row { display: flex; gap: 8px; margin-bottom: 6px; }
+.save-btn { flex: 1; padding: 13px; background: #3498db; color: white; border: none; border-radius: 10px; font-family: 'Hind Siliguri', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.wa-btn { flex: 1; padding: 13px; background: #25D366; color: white; border: none; border-radius: 10px; font-family: 'Hind Siliguri', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(37,211,102,.3); }
+.wa-btn:active, .save-btn:active { opacity: .9; transform: scale(.99); }
+.hint { text-align: center; font-size: 11px; color: var(--gray); margin-bottom: 16px; }
+
+/* SETTINGS & ADMIN OVERLAY */
+.settings-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+.settings-box {
+  background: white; border-radius: 14px; padding: 22px 18px;
+  width: 92%; max-width: 340px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+.settings-box h2 { font-size: 16px; color: var(--green); margin-bottom: 14px; text-align:center; }
+.settings-box .login-btn { margin-top: 8px; width: 100%; }
+.settings-input {
+  width: 100%; padding: 11px; border: 2px solid var(--border);
+  border-radius: 8px; font-family: 'Hind Siliguri', sans-serif;
+  font-size: 14px; margin-bottom: 8px; box-sizing: border-box;
+}
+.settings-btn {
+  width: 100%; padding: 11px; border: none; border-radius: 8px;
+  font-family: 'Hind Siliguri', sans-serif; font-size: 14px;
+  font-weight: 700; cursor: pointer; margin-bottom: 6px;
+}
+.btn-green { background: var(--green); color: white; }
+.btn-red { background: #e74c3c; color: white; }
+.btn-gray { background: #eee; color: #555; }
+.admin-btn {
+  background: none; border: none; font-size: 22px;
+  cursor: pointer; padding: 0 4px; line-height: 1;
+  flex-shrink: 0;
+}
+
+/* LOGIN SCREEN */
+.login-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+.login-box {
+  background: white; border-radius: 14px; padding: 24px 20px;
+  width: 90%; max-width: 340px; text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+.login-box h2 { font-size: 17px; color: var(--green); margin-bottom: 6px; }
+.login-box p { font-size: 12px; color: #666; margin-bottom: 16px; }
+.login-options { display: flex; flex-direction: column; gap: 10px; }
+.login-btn {
+  padding: 13px; border: 2px solid var(--border); border-radius: 10px;
+  background: var(--light); font-family: 'Hind Siliguri', sans-serif;
+  font-size: 14px; font-weight: 700; color: var(--green); cursor: pointer;
+  transition: all .15s;
+}
+.login-btn:active { background: var(--green); color: white; }
+.login-btn.other { border-color: #ccc; background: #f5f5f5; color: #555; }
+
+.check-diary-btn {
+  width: 100%; padding: 12px; margin-bottom: 10px;
+  background: #2c3e50; color: white; border: none; border-radius: 10px;
+  font-family: 'Hind Siliguri', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.check-diary-btn:active { opacity: .9; }
+
+/* checkbox legend */
+.legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; padding: 7px 10px; background: white; border-radius: 8px; border: 1px solid #ddd; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTlqajOSDzM6agfh4zJ49W99LBd3VL9vU",
+      authDomain: "dayri-3e794.firebaseapp.com",
+      projectId: "dayri-3e794",
+      storageBucket: "dayri-3e794.firebasestorage.app",
+      messagingSenderId: "1079745792648",
+      appId: "1:1079745792648:web:0b1e061d3d80ec66f8ed3d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===== FCM TOKEN SAVE =====
+    window.firebaseSaveFcmToken = async function(teacherName) {
+      try {
+        if (!('serviceWorker' in navigator)) return;
+        if (Notification.permission !== 'granted') return;
+        const messaging = getMessaging(app);
+        const registration = await navigator.serviceWorker.ready;
+        const token = await getToken(messaging, {
+          vapidKey: "FQc4Oqqe4KgZ7eb2NkEkvZwMCFfBi7j1BpZYgEUZeDw",
+          serviceWorkerRegistration: registration
+        });
+        if (token) {
+          await setDoc(doc(db, 'fcm_tokens', teacherName), {
+            token: token,
+            updatedAt: new Date().toISOString()
+          });
+          console.log('FCM token saved for', teacherName);
+        }
+      } catch(e) {
+        console.warn('FCM token save failed:', e);
+      }
+    };
+
+    // ===== Firebase SYNC =====
+
+    // diary entry Firebase এ save করা
+    window.firebaseSaveDiary = async function(dateStr, cls, entry) {
+      try {
+        const key = `${dateStr}_${cls}`;
+        await setDoc(doc(db, 'diary', key), entry);
+        console.log('Firebase save ok:', key);
+      } catch(e) {
+        console.warn('Firebase save failed:', e);
+      }
+    };
+
+    // নোটিশ Firebase এ save করা
+    window.firebaseSaveNotice = async function(dateStr, notice) {
+      try {
+        await setDoc(doc(db, 'notices', dateStr), { notice, savedAt: new Date().toISOString() });
+      } catch(e) {
+        console.warn('Firebase notice save failed:', e);
+      }
+    };
+
+    // আজকের সব diary real-time listen করা
+    window.firebaseListenToday = function(dateStr, callback) {
+      const q = collection(db, 'diary');
+      return onSnapshot(q, (snapshot) => {
+        const entries = [];
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          if(data.date === dateStr) entries.push({ key: docSnap.id, entry: data });
+        });
+        callback(entries);
+      });
+    };
+
+    // duty teacher Firebase এ save করা
+    window.firebaseSaveDutyTeacher = async function(index) {
+      try {
+        await setDoc(doc(db, 'settings', 'duty'), { 
+          teacherIndex: index, 
+          updatedAt: new Date().toISOString() 
+        });
+      } catch(e) { console.warn('Firebase duty save failed:', e); }
+    };
+
+    // duty teacher real-time listen
+    window.firebaseListenDuty = function() {
+      return onSnapshot(doc(db, 'settings', 'duty'), (docSnap) => {
+        if(docSnap.exists()) {
+          const data = docSnap.data();
+          const idx = data.teacherIndex;
+          localStorage.setItem('manual_duty_teacher', idx);
+          if(typeof renderDutyBanner === 'function') renderDutyBanner();
+          if(typeof renderTeacherList === 'function') renderTeacherList();
+          if(typeof updatePreview === 'function') updatePreview();
+        }
+      });
+    };
+
+    // teacher names Firebase এ save করা
+    window.firebaseSaveTeacherNames = async function(names) {
+      try {
+        await setDoc(doc(db, 'settings', 'teachers'), { 
+          names, 
+          updatedAt: new Date().toISOString() 
+        });
+      } catch(e) { console.warn('Firebase teacher names save failed:', e); }
+    };
+
+    // teacher names real-time listen
+    window.firebaseListenTeachers = function() {
+      return onSnapshot(doc(db, 'settings', 'teachers'), (docSnap) => {
+        if(docSnap.exists()) {
+          const names = docSnap.data().names;
+          if(names) {
+            localStorage.setItem('teacher_names', JSON.stringify(names));
+            if(typeof renderDutyBanner === 'function') renderDutyBanner();
+            if(typeof renderTeacherList === 'function') renderTeacherList();
+          }
+        }
+      });
+    };
+
+    // page load হলে আজকের data Firebase থেকে sync করি
+    document.addEventListener('DOMContentLoaded', () => {
+      // duty ও teacher names real-time listen শুরু করি
+      window.firebaseListenDuty();
+      window.firebaseListenTeachers();
+      const dateEl = document.getElementById('diary-date');
+      if(!dateEl) return;
+      const dateStr = dateEl.value || new Date().toISOString().slice(0,10);
+
+      window.firebaseListenToday(dateStr, (entries) => {
+        if(!entries.length) return;
+        // Firebase data localStorage এ merge করি
+        entries.forEach(({key, entry}) => {
+          const localKey = `diary_${entry.date}_${entry.cls}`;
+          const existing = JSON.parse(localStorage.getItem(localKey)||'null');
+          if(!existing || new Date(entry.savedAt) > new Date(existing.savedAt||0)) {
+            localStorage.setItem(localKey, JSON.stringify(entry));
+          }
+        });
+        // UI update
+        if(typeof renderPending === 'function') renderPending();
+        if(typeof updatePreview === 'function') updatePreview();
+      });
+    });
+  </script>
+</head>
+<body>
+
+<div class="offline-bar" id="offline-bar">⚠️ অফলাইন — ডায়েরি সেভ থাকবে, ইন্টারনেট আসলে পাঠান</div>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="login-overlay" style="display:none;">
+  <div class="login-box">
+    <h2>📓 মাদ্রাসা ডায়েরি</h2>
+    <p>আপনি কে? একবার select করলে<br>পরের বার আর জিজ্ঞেস করবে না।</p>
+    <div class="login-options" id="login-options">
+    </div>
+  </div>
+</div>
+<div class="online-bar" id="online-bar">✅ ইন্টারনেট আছে — পাঠানো যাবে!</div>
+
+
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settings-overlay" style="display:none;">
+  <div class="settings-box">
+    <h2>⚙️ সেটিংস</h2>
+    <div id="settings-main">
+      <p style="font-size:12px;color:#666;text-align:center;margin-bottom:12px;">আপনার নাম পরিবর্তন করুন অথবা Admin Panel খুলুন</p>
+      <div id="user-btns"></div>
+      <button class="login-btn other" onclick="selectUser('অন্যান্য');closeSettings()">👥 অন্যান্য</button>
+      <hr style="margin:14px 0;border-color:#eee;">
+      <button class="settings-btn btn-gray" onclick="showAdminLogin()">🔐 Admin Panel (শিক্ষকের নাম পরিবর্তন)</button>
+      <button class="settings-btn btn-gray" style="margin-top:4px;" onclick="closeSettings()">✕ বন্ধ করুন</button>
+    </div>
+    <div id="admin-login" style="display:none;">
+      <p style="font-size:12px;color:#666;text-align:center;margin-bottom:10px;">Admin পাসওয়ার্ড দিন</p>
+      <input class="settings-input" type="password" id="admin-pass" placeholder="পাসওয়ার্ড">
+      <button class="settings-btn btn-green" onclick="checkAdminPass()">✅ প্রবেশ করুন</button>
+      <button class="settings-btn btn-gray" onclick="showSettingsMain()">← ফিরে যান</button>
+    </div>
+    <div id="admin-panel" style="display:none;">
+      <p style="font-size:12px;color:#666;text-align:center;margin-bottom:10px;">শিক্ষকের নাম পরিবর্তন করুন</p>
+      <p style="font-size:12px;color:#888;margin:4px 0 6px;">শিক্ষকের নাম:</p>
+      <div id="teacher-inputs"></div>
+      <button onclick="addTeacher()" style="width:100%;padding:8px;margin-top:4px;background:#2ecc71;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;">➕ নতুন শিক্ষক যোগ করুন</button>
+      <hr style="margin:12px 0;border-color:#eee;">
+      <p style="font-size:12px;color:#888;margin:4px 0 6px;">এই সপ্তাহে দায়িত্বরত শিক্ষক:</p>
+      <select id="duty-teacher-select" class="settings-input" style="margin-bottom:8px;"></select>
+      <button class="settings-btn btn-green" onclick="saveAdminSettings()">💾 সেভ করুন</button>
+      <button class="settings-btn btn-gray" onclick="closeSettings()">✕ বন্ধ করুন</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-header">
+  <h1>📓 মাদ্রাসা ডায়েরি</h1>
+  <p>লিখুন → সেভ করুন → WhatsApp-এ পাঠান</p>
+</div>
+
+<div class="duty-banner" id="duty-banner" style="justify-content:space-between;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="duty-icon">👤</span>
+    <span id="duty-text">লোড হচ্ছে...</span>
+  </div>
+  <button class="admin-btn" onclick="openSettings()" title="Admin">👥</button>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchClass(0,this)">প্লে</button>
+  <button class="tab-btn" onclick="switchClass(1,this)">নার্সারী</button>
+  <button class="tab-btn" onclick="switchClass(2,this)">প্রথম</button>
+  <button class="tab-btn" onclick="switchClass(3,this)">দ্বিতীয়</button>
+  <button class="tab-btn" onclick="switchClass(4,this)">তৃতীয়</button>
+</div>
+
+<div class="form-area">
+
+  <!-- Top row -->
+  <div class="top-row">
+    <div class="class-badge" id="class-badge">প্লে</div>
+    <div class="day-date">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:3px;">বারঃ</div>
+        <div class="day-group">
+          <label class="day-label"><input type="radio" name="day" value="শনি"> শনি</label>
+          <label class="day-label"><input type="radio" name="day" value="রবি"> রবি</label>
+          <label class="day-label"><input type="radio" name="day" value="সোম"> সোম</label>
+          <label class="day-label"><input type="radio" name="day" value="মঙ্গল"> মঙ্গল</label>
+          <label class="day-label"><input type="radio" name="day" value="বুধ"> বুধ</label>
+          <label class="day-label"><input type="radio" name="day" value="বৃহঃ"> বৃহঃ</label>
+          <label class="day-label"><input type="radio" name="day" value="শুক্র"> শুক্র</label>
+        </div>
+      </div>
+      <div class="date-input">
+        <span style="font-size:11px;font-weight:700;color:#555;">তারিখঃ</span>
+        <select id="date-day" onchange="updateDate()" style="border:1.5px solid var(--border);border-radius:6px;padding:5px 4px;font-family:'Hind Siliguri',sans-serif;font-size:12px;color:var(--red);font-weight:700;outline:none;"></select>
+        <select id="date-month" onchange="updateDate()" style="border:1.5px solid var(--border);border-radius:6px;padding:5px 4px;font-family:'Hind Siliguri',sans-serif;font-size:12px;color:var(--red);font-weight:700;outline:none;"></select>
+        <select id="date-year" onchange="updateDate()" style="border:1.5px solid var(--border);border-radius:6px;padding:5px 4px;font-family:'Hind Siliguri',sans-serif;font-size:12px;color:var(--red);font-weight:700;outline:none;"></select>
+        <input type="hidden" id="diary-date">
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Diary table -->
+  <table class="diary-table">
+    <thead>
+      <tr>
+        <th style="width:7%">নং</th>
+        <th style="width:22%">বিষয়</th>
+        <th style="width:42%">আগামী দিনের পড়া</th>
+        <th style="width:29%">পড়া ও লেখা / শুধু পড়া / শুধু লেখা</th>
+      </tr>
+    </thead>
+    <tbody id="diary-body"></tbody>
+    <tfoot>
+      <tr class="footer-row">
+        <td colspan="4">তোমরা সৎ কর্মে পরস্পর প্রতিযোগিতা করো — আল-কুরআন</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- Save button after table -->
+  <button class="save-btn" style="width:100%;margin-bottom:10px;" onclick="saveDiary()">💾 সেভ করুন</button>
+  <button onclick="clearAllData()" style="width:100%;padding:10px;margin-bottom:10px;background:#e74c3c;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">🗑️ পুরানো ডেটা মুছুন</button>
+
+  <!-- Notice -->
+  <div class="notice-card">
+    <div class="notice-head">📢 নোটিশ / বিশেষ তথ্য</div>
+    <div class="notice-body">
+      <textarea id="notice-text" rows="2" placeholder="কোনো নোটিশ থাকলে লিখুন..."></textarea>
+    </div>
+  </div>
+
+  <!-- Teacher rotation -->
+  <div class="teacher-panel">
+    <div class="teacher-head">👩‍🏫 শিক্ষকের সাপ্তাহিক দায়িত্ব</div>
+    <div class="teacher-list" id="teacher-list"></div>
+  </div>
+
+  <!-- Preview -->
+  <div class="preview-wrap" id="preview-wrap" style="display:none;">
+    <div class="preview-text" id="preview-text"></div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button class="check-diary-btn" style="margin-bottom:0;flex:1;padding:13px;font-size:15px;" onclick="togglePreview()" id="check-btn">👁️ চেক ডায়েরি</button>
+    <button class="wa-btn" style="flex:1;padding:13px;font-size:15px;" onclick="sendAllOrCurrent()">💬 WhatsApp-এ পাঠান</button>
+  </div>
+  <p class="hint">অফলাইনে "সেভ" করুন → ইন্টারনেট আসলে "WhatsApp" চাপুন</p>
+
+  <!-- hidden pending tracker -->
+  <div id="pending-card" style="display:none"><div id="pending-list"></div></div>
+
+</div>
+
+<script>
+const TEACHERS = ['সিফাত উদ্দিন','এমদাদ','জুলফিকার','ফাহাদ হোসেন'];
+const CLASS_NAMES = ['প্লে','নার্সারী','প্রথম','দ্বিতীয়','তৃতীয়'];
+const SUBJECTS = [
+  'কোরআন মাজীদ ও তাজবীদ',
+  'আরবি পড়া ও মৌখিক',
+  'গণিত','বাংলা','ইংরেজী',
+  'হাদীস/দোয়া',
+  'আ.হুসনা/কালিমা/খোৎবা',
+  'আদিয়ায়ে সালাত/মাসআলা',
+  'সাধারণ জ্ঞান',
+  'পরিবেশ পরিচিতি ও বিজ্ঞান',
+  'চিত্রাংকন',
+];
+const SUBJ_SHORT = ['কোরআন/তাজবীদ','আরবি পড়া ও মৌখিক','গণিত','বাংলা','ইংরেজী','হাদীস/দোয়া','আ.হুসনা/কালিমা/খোৎবা','আদিয়ায়ে সালাত/মাসআলা','সাধারণ জ্ঞান','পরিবেশ ও বিজ্ঞান','চিত্রাংকন'];
+const BN_NUMS = ['১','২','৩','৪','৫','৬','৭','৮','৯','১০','১১'];
+
+let currentClass = 0;
+let isOnline = navigator.onLine;
+
+// State: hw text + 3 checkboxes per row
+// checks[i] = { both, read, write }
+const DEFAULT_BOTH = [true,true,true,true,true,false,false,false,true,true,false];
+const DEFAULT_READ = [false,false,false,false,false,true,true,true,false,false,false];
+const DEFAULT_WRITE = [false,false,false,false,false,false,false,false,false,false,true];
+const classData = {};
+for(let c=0;c<5;c++){
+  classData[c] = {
+    hw: Array(11).fill(''),
+    both: [...DEFAULT_BOTH],
+    read: [...DEFAULT_READ],
+    write: [...DEFAULT_WRITE]
+  };
+}
+
+// ===== WEEK / TEACHER =====
+function getCurrentTeacher() {
+  // Manual override থাকলে সেটা ব্যবহার করি
+  const manual = localStorage.getItem('manual_duty_teacher');
+  if(manual !== null) return parseInt(manual);
+  // সিফাত উদ্দিন থেকে শুরু: ২৭ জুন ২০২৬ (শনিবার)
+  const startDate = new Date('2026-06-27');
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  startDate.setHours(0,0,0,0);
+  const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+  const weekNum = Math.floor(diffDays / 7);
+  const t = getTeachers();
+  return ((weekNum % t.length) + t.length) % t.length;
+}
+function renderTeacherList() {
+  const teachers = getTeachers();
+  const current = getCurrentTeacher();
+  const list = document.getElementById('teacher-list');
+  list.innerHTML = '';
+  teachers.forEach((name, i) => {
+    const offset = ((i - current) % teachers.length + teachers.length) % teachers.length;
+    const badge = offset === 0
+      ? '<span class="t-badge current">✅ এই সপ্তাহ</span>'
+      : `<span class="t-badge upcoming">${offset} সপ্তাহ পরে</span>`;
+    const weekText = offset === 0 ? 'এখন দায়িত্বে আছেন' : `${offset} সপ্তাহ পরে দায়িত্ব`;
+    list.innerHTML += `<div class="teacher-item"><div><div class="t-name">${name}</div><div class="t-week">${weekText}</div></div>${badge}</div>`;
+  });
+}
+function renderDutyBanner() {
+  const name = getTeachers()[getCurrentTeacher()];
+  document.getElementById('duty-text').textContent = `এই সপ্তাহে দায়িত্বে: ${name} — আজকের ডায়েরি পাঠান!`;
+}
+
+// ===== TABLE =====
+function renderTable() {
+  const body = document.getElementById('diary-body');
+  body.innerHTML = '';
+  SUBJECTS.forEach((sub, i) => {
+    const d = classData[currentClass];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="cell-num">${BN_NUMS[i]}</td>
+      <td class="cell-subject">${sub.replace(/\n/g,'<br>')}</td>
+      <td class="cell-input">
+        <textarea id="hw-${i}" rows="2" oninput="saveMemory()"></textarea>
+      </td>
+      <td class="cell-checks">
+        <div class="three-checks">
+          <label class="chk-label both">
+            <input type="checkbox" id="both-${i}" onchange="selectCheck(${i},'both')">
+            পড়া ও লেখা
+          </label>
+          <label class="chk-label read">
+            <input type="checkbox" id="read-${i}" onchange="selectCheck(${i},'read')">
+            শুধু পড়া
+          </label>
+          <label class="chk-label write">
+            <input type="checkbox" id="write-${i}" onchange="selectCheck(${i},'write')">
+            শুধু লেখা
+          </label>
+        </div>
+      </td>`;
+    body.appendChild(tr);
+    // .value ও .checked আলাদাভাবে set করতে হবে — innerHTML দিয়ে হয় না
+    document.getElementById('hw-' + i).value = d.hw[i] || '';
+    document.getElementById('both-' + i).checked = d.both[i] || false;
+    document.getElementById('read-' + i).checked = d.read[i] || false;
+    document.getElementById('write-' + i).checked = d.write[i] || false;
+  });
+  updatePreview();
+}
+
+function selectCheck(i, type) {
+  // Uncheck others, keep only selected
+  ['both','read','write'].forEach(t => {
+    const el = document.getElementById(`${t}-${i}`);
+    if(el) el.checked = (t === type) ? el.checked : false;
+  });
+  saveMemory();
+}
+
+function getDateStr() {
+  return document.getElementById('diary-date')?.value || '';
+}
+
+function loadAutoSaved(cls) {
+  const dateStr = getDateStr();
+  if(!dateStr) return;
+  try {
+    const saved = JSON.parse(localStorage.getItem(`diary_auto_${dateStr}_${cls}`)||'null');
+    if(saved){
+      classData[cls].hw = saved.hw || Array(11).fill('');
+      // checkbox: saved data তে সব false হলে DEFAULT ব্যবহার করব
+      const hasBoth  = saved.both  && saved.both.some(v=>v);
+      const hasRead  = saved.read  && saved.read.some(v=>v);
+      const hasWrite = saved.write && saved.write.some(v=>v);
+      if(hasBoth || hasRead || hasWrite){
+        classData[cls].both  = saved.both;
+        classData[cls].read  = saved.read;
+        classData[cls].write = saved.write;
+      }
+      // সব false হলে DEFAULT রাখব (পরিবর্তন নেই)
+    }
+  } catch(e){}
+}
+
+function saveMemory() {
+  const d = classData[currentClass];
+  SUBJECTS.forEach((_,i) => {
+    d.hw[i]    = document.getElementById(`hw-${i}`)?.value || '';
+    d.both[i]  = document.getElementById(`both-${i}`)?.checked || false;
+    d.read[i]  = document.getElementById(`read-${i}`)?.checked || false;
+    d.write[i] = document.getElementById(`write-${i}`)?.checked || false;
+  });
+  const dateStr = getDateStr();
+  if(dateStr){
+    localStorage.setItem(`diary_auto_${dateStr}_${currentClass}`, JSON.stringify({
+      hw: [...d.hw], both: [...d.both], read: [...d.read], write: [...d.write]
+    }));
+  }
+  updatePreview();
+}
+
+function switchClass(cls, btn) {
+  saveMemory();
+  currentClass = cls;
+  // DEFAULT values reset করি তারপর auto-saved load
+  classData[cls].hw    = Array(11).fill('');
+  classData[cls].both  = [...DEFAULT_BOTH];
+  classData[cls].read  = [...DEFAULT_READ];
+  classData[cls].write = [...DEFAULT_WRITE];
+  loadAutoSaved(cls);
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('class-badge').textContent = CLASS_NAMES[cls];
+  renderTable();
+}
+
+// ===== DATE/DAY =====
+const MONTHS_BN = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+
+function populateDateSelects() {
+  const dayEl = document.getElementById('date-day');
+  const monthEl = document.getElementById('date-month');
+  const yearEl = document.getElementById('date-year');
+
+  // Days
+  for(let d=1;d<=31;d++){
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d;
+    dayEl.appendChild(o);
+  }
+  // Months
+  MONTHS_BN.forEach((m,i)=>{
+    const o = document.createElement('option');
+    o.value = i+1; o.textContent = m;
+    monthEl.appendChild(o);
+  });
+  // Years
+  const curY = new Date().getFullYear();
+  for(let y=curY-1;y<=curY+2;y++){
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    yearEl.appendChild(o);
+  }
+}
+
+function updateDate() {
+  const d = document.getElementById('date-day').value;
+  const m = String(document.getElementById('date-month').value).padStart(2,'0');
+  const y = document.getElementById('date-year').value;
+  document.getElementById('diary-date').value = `${y}-${m}-${String(d).padStart(2,'0')}`;
+  // classData reset করি DEFAULT values দিয়ে, তারপর auto-saved load
+  CLASS_NAMES.forEach((_,cls) => {
+    classData[cls].hw    = Array(11).fill('');
+    classData[cls].both  = [...DEFAULT_BOTH];
+    classData[cls].read  = [...DEFAULT_READ];
+    classData[cls].write = [...DEFAULT_WRITE];
+    loadAutoSaved(cls);
+  });
+  renderTable();
+  renderPending();
+  updatePreview();
+}
+
+function setToday() {
+  const d = new Date();
+  populateDateSelects();
+  document.getElementById('date-day').value = d.getDate();
+  document.getElementById('date-month').value = d.getMonth()+1;
+  document.getElementById('date-year').value = d.getFullYear();
+  updateDate();
+  const map={6:'শনি',0:'রবি',1:'সোম',2:'মঙ্গল',3:'বুধ',4:'বৃহঃ',5:'শুক্র'};
+  const name = map[d.getDay()];
+  document.querySelectorAll('input[name=day]').forEach(cb=>{ cb.checked=(cb.value===name); });
+}
+function getCheckedDays() {
+  return [...document.querySelectorAll('input[name=day]:checked')].map(c=>c.value).join(', ');
+}
+function formatDateBn(dateStr) {
+  if(!dateStr) return '';
+  const d=new Date(dateStr);
+  const months=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// ===== MESSAGE =====
+function getTaskLabel(i) {
+  const d = classData[currentClass];
+  const parts = [];
+  if(d.both[i])  parts.push('পড়া ও লেখা');
+  if(d.read[i])  parts.push('শুধু পড়া');
+  if(d.write[i]) parts.push('শুধু লেখা');
+  return parts.length ? ` (${parts.join(', ')})` : '';
+}
+
+function buildMessage(cls) {
+  const c = cls !== undefined ? cls : currentClass;
+  const d = classData[c];
+  const dateStr = document.getElementById('diary-date').value;
+  const days = getCheckedDays() || '—';
+  const teacher = getTeachers()[getCurrentTeacher()];
+  let msg = `📓 *মাদ্রাসা ডায়েরি — ${CLASS_NAMES[c]} শ্রেণি*\n`;
+  msg += `📅 ${days} | ${formatDateBn(dateStr)}\n`;
+  msg += `👤 দায়িত্বরত শিক্ষক: ${teacher}\n`;
+  msg += `${'━'.repeat(26)}\n*আগামী দিনের পড়া:*\n\n`;
+  let hasAny = false;
+  SUBJECTS.forEach((_,i) => {
+    const hw = (d.hw[i]||'').trim();
+    if(hw){
+      hasAny = true;
+      const taskLabel = (() => {
+        const parts=[];
+        if(d.both[i]) parts.push('পড়া ও লেখা');
+        if(d.read[i]) parts.push('শুধু পড়া');
+        if(d.write[i]) parts.push('শুধু লেখা');
+        return parts.length ? ` _(${parts.join(', ')})_` : '';
+      })();
+      msg += `▪️ *${SUBJ_SHORT[i]}:* ${hw}${taskLabel}\n`;
+    }
+  });
+  if(!hasAny) msg += `   (কোনো হোমওয়ার্ক নেই)\n`;
+  const notice = document.getElementById('notice-text')?.value?.trim()||'';
+  if(notice){ msg += `\n${'━'.repeat(26)}\n📢 *নোটিশ:*\n${notice}`; }
+  return msg;
+}
+
+function updatePreview() {
+  const items = getPendingItems();
+  let text = '';
+  if(items.length > 0){
+    text = buildCombinedMessage(items);
+  } else {
+    text = buildMessage();
+  }
+  document.getElementById('preview-text').textContent = text;
+}
+
+function togglePreview() {
+  const wrap = document.getElementById('preview-wrap');
+  const btn = document.getElementById('check-btn');
+  const isHidden = wrap.style.display === 'none';
+  if(isHidden) {
+    updatePreview();
+    wrap.style.display = 'block';
+    btn.textContent = '✕ প্রিভিউ বন্ধ করুন';
+  } else {
+    wrap.style.display = 'none';
+    btn.textContent = '👁️ চেক ডায়েরি';
+  }
+}
+
+function sendAllOrCurrent() {
+  saveMemory();
+  const items = getPendingItems();
+  if(items.length > 0){
+    sendAllPending();
+  } else {
+    const msg = buildMessage();
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  }
+}
+
+function clearAllData() {
+  if(confirm('সব সেভ করা ডেটা মুছে ফেলবেন?\nএই কাজ ফেরানো যাবে না।')) {
+    localStorage.clear();
+    alert('✅ সব ডেটা মুছে গেছে।');
+    location.reload();
+  }
+}
+
+function clearAllData() {
+  if(confirm('সব সেভ করা ডেটা মুছে ফেলবেন?\nএই কাজ ফেরানো যাবে না।')) {
+    localStorage.clear();
+    alert('✅ সব ডেটা মুছে গেছে।');
+    location.reload();
+  }
+}
+
+function saveDiary() {
+  saveMemory();
+  const dateStr = document.getElementById('diary-date').value;
+  const days = getCheckedDays();
+  const notice = document.getElementById('notice-text').value;
+  if(notice && notice.trim()) {
+    localStorage.setItem('diary_notice_' + dateStr, notice.trim());
+    if(typeof window.firebaseSaveNotice === 'function') {
+      window.firebaseSaveNotice(dateStr, notice.trim());
+    }
+  }
+  const savedClasses = [];
+
+  for (let cls = 0; cls < CLASS_NAMES.length; cls++) {
+    const d = classData[cls];
+    const hasData = d.hw.some(h => h && h.trim() !== '');
+    if (!hasData) continue;
+    const key = `diary_${dateStr}_${cls}`;
+    // পুরানো entry থাকলে merge করি
+    let exHw    = Array(11).fill('');
+    let exBoth  = Array(11).fill(false);
+    let exRead  = Array(11).fill(false);
+    let exWrite = Array(11).fill(false);
+    try {
+      const ex = JSON.parse(localStorage.getItem(key)||'null');
+      if(ex){ exHw=ex.hw||exHw; exBoth=ex.both||exBoth; exRead=ex.read||exRead; exWrite=ex.write||exWrite; }
+    } catch(e){}
+    const mergedHw    = exHw.map((h,i)    => (d.hw[i] && d.hw[i].trim()) ? d.hw[i]    : h);
+    const mergedBoth  = exBoth.map((b,i)  => (d.hw[i] && d.hw[i].trim()) ? d.both[i]  : b);
+    const mergedRead  = exRead.map((r,i)  => (d.hw[i] && d.hw[i].trim()) ? d.read[i]  : r);
+    const mergedWrite = exWrite.map((w,i) => (d.hw[i] && d.hw[i].trim()) ? d.write[i] : w);
+    const entry = {
+      cls, clsName: CLASS_NAMES[cls],
+      date: dateStr, days,
+      hw:    mergedHw,
+      both:  mergedBoth,
+      read:  mergedRead,
+      write: mergedWrite,
+      notice,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(key, JSON.stringify(entry));
+    savedClasses.push(CLASS_NAMES[cls]);
+    // Firebase এ sync করি
+    if(typeof window.firebaseSaveDiary === 'function') {
+      window.firebaseSaveDiary(dateStr, cls, entry);
+    }
+  }
+  if(savedClasses.length > 0){
+    alert('✅ সেভ হয়েছে: ' + savedClasses.join(', '));
+  } else {
+    alert('⚠️ কোনো পড়া লেখা হয়নি!');
+  }
+  renderPending();
+  updatePreview();
+}
+
+function getPendingItems() {
+  const todayStr = getDateStr();
+  const allItems = [];
+  for(let i = 0; i < localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith('diary_') && !k.startsWith('diary_notice_') && !k.startsWith('diary_auto_')){
+      try{
+        const entry = JSON.parse(localStorage.getItem(k));
+        // শুধু আজকের তারিখের entry নেব
+        if(entry.date === todayStr) allItems.push({key:k, entry});
+      }catch(e){}
+    }
+  }
+
+  // একই cls এর duplicate merge করি
+  const merged = {};
+  allItems.forEach(({key, entry}) => {
+    const cls = entry.cls ?? -1;
+    if(cls < 0) return;
+    if(!merged[cls]) {
+      merged[cls] = {key, entry: {
+        ...entry,
+        hw:    [...(entry.hw    || Array(11).fill(''))],
+        both:  [...(entry.both  || Array(11).fill(false))],
+        read:  [...(entry.read  || Array(11).fill(false))],
+        write: [...(entry.write || Array(11).fill(false))],
+      }};
+    } else {
+      // merge করি — লেখা থাকলে সেটা নেব
+      const m = merged[cls].entry;
+      (entry.hw||[]).forEach((hw,i) => {
+        if(hw && hw.trim()){
+          m.hw[i]    = hw;
+          m.both[i]  = (entry.both  ||[])[i] || false;
+          m.read[i]  = (entry.read  ||[])[i] || false;
+          m.write[i] = (entry.write ||[])[i] || false;
+        }
+      });
+      // পুরানো duplicate key মুছি
+      localStorage.removeItem(key);
+    }
+  });
+
+  // merged entry localStorage এ update করি
+  Object.values(merged).forEach(({key, entry}) => {
+    localStorage.setItem(key, JSON.stringify(entry));
+  });
+
+  return Object.values(merged).sort((a,b) => (a.entry.cls||0) - (b.entry.cls||0));
+}
+
+function renderPending() {
+  const items = getPendingItems();
+  const card = document.getElementById('pending-card');
+  const list = document.getElementById('pending-list');
+
+  // clear বাটন সবসময় দেখাই
+  const clearBtn = document.getElementById('clear-data-btn');
+  if(clearBtn) clearBtn.style.display = 'block';
+
+  if(items.length===0 || !isOnline){ card.classList.remove('show'); return; }
+  card.classList.add('show');
+  list.innerHTML = '';
+
+  // CLASS_NAMES order অনুযায়ী sort করে দেখাই
+  const sorted = [...items].sort((a,b) => a.entry.cls - b.entry.cls);
+  sorted.forEach(({key, entry}) => {
+    const div = document.createElement('div');
+    div.className = 'pending-item';
+    div.innerHTML = `<div class="p-info">✅ ${entry.clsName} শ্রেণি — ${formatDateBn(entry.date)}</div>`;
+    list.appendChild(div);
+  });
+
+  // One button to send ALL together
+  const btnDiv = document.createElement('div');
+  btnDiv.style.cssText = 'margin-top:8px;';
+  btnDiv.innerHTML = `<button class="p-send" style="width:100%;padding:10px;font-size:14px;" onclick="sendAllPending()">
+    📤 সব ক্লাস একসাথে WhatsApp-এ পাঠান
+  </button>`;
+  list.appendChild(btnDiv);
+}
+
+function buildCombinedMessage(items) {
+  // CLASS_NAMES order অনুযায়ী sort: প্লে→নার্সারী→প্রথম→দ্বিতীয়→তৃতীয়
+  const sorted = [...items].sort((a,b) => a.entry.cls - b.entry.cls);
+  const firstEntry = sorted[0].entry;
+  const teacher = getTeachers()[getCurrentTeacher()];
+
+  let combined = `📓 *মাদ্রাসা ডায়েরি — সকল শ্রেণি*\n`;
+  combined += `📅 ${firstEntry.days || '—'} | ${formatDateBn(firstEntry.date)}\n`;
+  combined += `👤 দায়িত্বরত শিক্ষক: ${teacher}\n`;
+  combined += `${'━'.repeat(26)}\n\n`;
+
+  let noticeText = '';
+
+  sorted.forEach(({entry}) => {
+    combined += `🏫 *${entry.clsName} শ্রেণি*\n`;
+    combined += `${'─'.repeat(20)}\n`;
+    let hasAny = false;
+    if(entry.hw) {
+      entry.hw.forEach((hw, i) => {
+        if(hw && hw.trim()) {
+          hasAny = true;
+          const parts = [];
+          if(entry.both && entry.both[i]) parts.push('পড়া ও লেখা');
+          if(entry.read && entry.read[i]) parts.push('শুধু পড়া');
+          if(entry.write && entry.write[i]) parts.push('শুধু লেখা');
+          const label = parts.length ? ` _(${parts.join(', ')})_` : '';
+          combined += `▪️ *${SUBJ_SHORT[i]}:* ${hw.trim()}${label}\n`;
+        }
+      });
+    }
+    if(!hasAny) combined += '   (কোনো হোমওয়ার্ক নেই)\n';
+    combined += '\n';
+    // নোটিশ আলাদা রাখি — শেষে একবার দেখাবো
+    if(entry.notice && entry.notice.trim() && !noticeText) {
+      noticeText = entry.notice.trim();
+    }
+  });
+
+  // localStorage থেকেও নোটিশ চেক করি
+  if(!noticeText) {
+    const todayStr = firstEntry.date;
+    const saved = localStorage.getItem('diary_notice_' + todayStr);
+    if(saved) noticeText = saved;
+  }
+
+  combined += `${'━'.repeat(26)}`;
+  if(noticeText) combined += `\n\n📢 *নোটিশ:*\n${noticeText}`;
+
+  return combined;
+}
+
+function buildCombinedMessage(items) {
+  const sorted = [...items].sort((a,b) => (a.entry.cls||0) - (b.entry.cls||0));
+  const firstEntry = sorted[0].entry;
+  const teacher = getTeachers()[getCurrentTeacher()];
+  let msg = `📓 *মাদ্রাসা ডায়েরি — সকল শ্রেণি*\n`;
+  msg += `📅 ${firstEntry.days || '—'} | ${formatDateBn(firstEntry.date)}\n`;
+  msg += `👤 দায়িত্বরত শিক্ষক: ${teacher}\n`;
+  msg += `${'━'.repeat(26)}\n\n`;
+  let noticeText = '';
+  sorted.forEach(({entry}) => {
+    msg += `🏫 *${entry.clsName} শ্রেণি*\n`;
+    msg += `${'─'.repeat(20)}\n`;
+    let hasAny = false;
+    (entry.hw||[]).forEach((hw, i) => {
+      if(hw && hw.trim()){
+        hasAny = true;
+        const parts = [];
+        if(entry.both && entry.both[i]) parts.push('পড়া ও লেখা');
+        if(entry.read && entry.read[i]) parts.push('শুধু পড়া');
+        if(entry.write && entry.write[i]) parts.push('শুধু লেখা');
+        const label = parts.length ? ` _(${parts.join(', ')})_` : '';
+        msg += `▪️ *${SUBJ_SHORT[i]}:* ${hw.trim()}${label}\n`;
+      }
+    });
+    if(!hasAny) msg += '   (কোনো হোমওয়ার্ক নেই)\n';
+    msg += '\n';
+    if(!noticeText && entry.notice && entry.notice.trim()) noticeText = entry.notice.trim();
+  });
+  // localStorage থেকেও নোটিশ চেক
+  if(!noticeText) {
+    const saved = localStorage.getItem('diary_notice_' + firstEntry.date);
+    if(saved) noticeText = saved;
+  }
+  msg += `${'━'.repeat(26)}`;
+  if(noticeText) msg += `\n\n📢 *নোটিশ:*\n${noticeText}`;
+  return msg;
+}
+
+function sendAllPending() {
+  const items = getPendingItems();
+  if(items.length === 0) return;
+  const combined = buildCombinedMessage(items);
+  window.open('https://wa.me/?text='+encodeURIComponent(combined),'_blank');
+  setTimeout(()=>{
+    if(confirm('সব ক্লাসের ডায়েরি পাঠানো হয়েছে?\nতালিকা পরিষ্কার করতে OK চাপুন।')){
+      items.forEach(({key}) => localStorage.removeItem(key));
+      renderPending();
+      updatePreview();
+    }
+  }, 2000);
+}
+
+function updateOnlineStatus() {
+  isOnline = navigator.onLine;
+  document.getElementById('offline-bar').classList.toggle('show', !isOnline);
+  document.getElementById('online-bar').classList.toggle('show', isOnline);
+  if(isOnline){
+    renderPending();
+    setTimeout(()=>document.getElementById('online-bar').classList.remove('show'), 3000);
+  }
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// ===== NOTIFICATION =====
+async function requestNotificationPermission() {
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default') {
+    const result = await Notification.requestPermission();
+    if(result === 'granted') {
+      // Register periodic sync if supported
+      if('serviceWorker' in navigator && 'periodicSync' in ServiceWorkerRegistration.prototype) {
+        const reg = await navigator.serviceWorker.ready;
+        try {
+          await reg.periodicSync.register('diary-check', { minInterval: 60 * 60 * 1000 });
+        } catch(e) {}
+      }
+      const currentUser = localStorage.getItem('current_user');
+      if(currentUser && currentUser !== 'অন্যান্য' && window.firebaseSaveFcmToken) {
+        window.firebaseSaveFcmToken(currentUser);
+      }
+    }
+  } else if(Notification.permission === 'granted') {
+    const currentUser = localStorage.getItem('current_user');
+    if(currentUser && currentUser !== 'অন্যান্য' && window.firebaseSaveFcmToken) {
+      window.firebaseSaveFcmToken(currentUser);
+    }
+  }
+}
+
+function sendNotification(title, body) {
+  const teacher = getTeachers()[getCurrentTeacher()];
+  // Try via service worker first (works when app closed)
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification(title, {
+        body: body,
+        icon: 'https://cdn-icons-png.flaticon.com/512/2541/2541979.png',
+        vibrate: [200, 100, 200],
+        requireInteraction: true,
+        tag: 'diary-reminder'
+      });
+    });
+  } else if(Notification.permission === 'granted') {
+    new Notification(title, { body, icon: 'https://cdn-icons-png.flaticon.com/512/2541/2541979.png' });
+  }
+}
+
+// অনলাইনে আসলে চেক করব
+window.addEventListener('online', () => {
+  updateOnlineStatus();
+  setTimeout(checkAndNotify, 3000);
+});
+
+// প্রতি ১ মিনিটে চেক করব
+setInterval(checkAndNotify, 60000);
+
+// ===== INIT =====
+document.addEventListener('input', ()=>{ saveMemory(); updatePreview(); });
+document.addEventListener('change', ()=>{ saveMemory(); updatePreview(); });
+
+// ===== TEACHER NAMES (localStorage override) =====
+function getTeachers() {
+  const saved = localStorage.getItem('teacher_names');
+  return saved ? JSON.parse(saved) : [...TEACHERS];
+}
+
+function renderLoginOptions() {
+  const teachers = getTeachers();
+  const current = localStorage.getItem('current_user');
+  // login overlay
+  const loginOpts = document.getElementById('login-options');
+  if (loginOpts) {
+    loginOpts.innerHTML = teachers.map(t =>
+      `<button class="login-btn" onclick="selectUser('${t}')">👤 ${t}</button>`
+    ).join('') + `<button class="login-btn other" onclick="selectUser('অন্যান্য')">👥 অন্যান্য (শিক্ষক / অভিভাবক)</button>`;
+  }
+  // settings user btns
+  const userBtns = document.getElementById('user-btns');
+  if (userBtns) {
+    userBtns.innerHTML = teachers.map(t =>
+      `<button class="login-btn${current===t?' btn-green':''}" onclick="selectUser('${t}');closeSettings()">👤 ${t}${current===t?' ✓':''}</button>`
+    ).join('');
+  }
+}
+
+// ===== SETTINGS =====
+function openSettings() {
+  showSettingsMain();
+  renderLoginOptions();
+  document.getElementById('settings-overlay').style.display = 'flex';
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').style.display = 'none';
+}
+function showSettingsMain() {
+  document.getElementById('settings-main').style.display = 'block';
+  document.getElementById('admin-login').style.display = 'none';
+  document.getElementById('admin-panel').style.display = 'none';
+}
+function showAdminLogin() {
+  document.getElementById('settings-main').style.display = 'none';
+  document.getElementById('admin-login').style.display = 'block';
+  document.getElementById('admin-pass').value = '';
+}
+function checkAdminPass() {
+  const pass = document.getElementById('admin-pass').value;
+  if (pass === '1234') {
+    showAdminPanel();
+  } else {
+    alert('❌ পাসওয়ার্ড ভুল!');
+  }
+}
+function showAdminPanel() {
+  document.getElementById('admin-login').style.display = 'none';
+  document.getElementById('admin-panel').style.display = 'block';
+  renderTeacherInputs();
+}
+
+function renderTeacherInputs() {
+  const teachers = getTeachers();
+  document.getElementById('teacher-inputs').innerHTML = teachers.map((t,i) =>
+    `<div style="display:flex;gap:6px;margin-bottom:6px;">
+      <input class="settings-input" id="tname_${i}" value="${t}" placeholder="${i+1}. শিক্ষকের নাম" style="flex:1;margin-bottom:0;">
+      <button onclick="removeTeacher(${i})" style="padding:6px 10px;background:#e74c3c;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">🗑️</button>
+    </div>`
+  ).join('');
+  // duty dropdown ও update করি
+  const currentDuty = parseInt(localStorage.getItem('manual_duty_teacher') ?? getCurrentTeacher());
+  const sel = document.getElementById('duty-teacher-select');
+  sel.innerHTML = teachers.map((t,i) =>
+    `<option value="${i}" ${i===currentDuty?'selected':''}>${t}</option>`
+  ).join('');
+}
+
+function addTeacher() {
+  const teachers = getTeachers();
+  teachers.push('নতুন শিক্ষক');
+  localStorage.setItem('teacher_names', JSON.stringify(teachers));
+  renderTeacherInputs();
+}
+
+function removeTeacher(idx) {
+  const teachers = getTeachers();
+  if(teachers.length <= 1) { alert('কমপক্ষে ১ জন শিক্ষক থাকতে হবে!'); return; }
+  if(!confirm(`"${teachers[idx]}" কে বাদ দেবেন?`)) return;
+  teachers.splice(idx, 1);
+  localStorage.setItem('teacher_names', JSON.stringify(teachers));
+  // duty teacher reset করি যদি index out of range হয়
+  const duty = parseInt(localStorage.getItem('manual_duty_teacher')||0);
+  if(duty >= teachers.length) localStorage.setItem('manual_duty_teacher', 0);
+  renderTeacherInputs();
+}
+function saveAdminSettings() {
+  // শিক্ষকের নাম save — input থেকে সব নাম নেব
+  const teachers = getTeachers();
+  const newNames = [];
+  for(let i = 0; i < teachers.length; i++) {
+    const el = document.getElementById(`tname_${i}`);
+    const name = el ? el.value.trim() : '';
+    if(name) newNames.push(name);
+  }
+  if(newNames.length === 0) { alert('কমপক্ষে ১ জন শিক্ষক লাগবে!'); return; }
+  localStorage.setItem('teacher_names', JSON.stringify(newNames));
+  // Firebase এ teacher names sync
+  if(typeof window.firebaseSaveTeacherNames === 'function') {
+    window.firebaseSaveTeacherNames(newNames);
+  }
+
+  // দায়িত্ব teacher save
+  const sel = document.getElementById('duty-teacher-select');
+  if(sel) {
+    const idx = parseInt(sel.value);
+    localStorage.setItem('manual_duty_teacher', idx);
+    // Firebase এ duty sync — সব device এ update হবে
+    if(typeof window.firebaseSaveDutyTeacher === 'function') {
+      window.firebaseSaveDutyTeacher(idx);
+    }
+  }
+  renderDutyBanner();
+  renderTeacherList();
+  renderLoginOptions();
+  alert('✅ সেভ হয়েছে! সব device এ update হবে।');
+  closeSettings();
+}
+
+// পুরানো function নাম support এর জন্য
+function saveTeacherNames() { saveAdminSettings(); }
+
+
+function selectUser(name) {
+  localStorage.setItem('current_user', name);
+  document.getElementById('login-overlay').style.display = 'none';
+  requestNotificationPermission();
+  setTimeout(checkAndNotify, 3000);
+}
+
+function checkLogin() {
+  renderLoginOptions();
+  const user = localStorage.getItem('current_user');
+  if (!user) {
+    document.getElementById('login-overlay').style.display = 'flex';
+  }
+}
+
+// নোটিফিকেশন শুধু দায়িত্বপ্রাপ্ত শিক্ষকের মোবাইলে
+function checkAndNotify() {
+  if(Notification.permission !== 'granted') return;
+  const currentUser = localStorage.getItem('current_user');
+  if (!currentUser || currentUser === 'অন্যান্য') return;
+
+  const dutyTeacher = getTeachers()[getCurrentTeacher()];
+  if (currentUser !== dutyTeacher) return; // এই সপ্তাহে দায়িত্ব নেই
+
+  const now = new Date();
+  const hour = now.getHours();
+  if(hour >= 17) {
+    const lastNotify = localStorage.getItem('last_notify_date');
+    const todayStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    if(lastNotify !== todayStr) {
+      localStorage.setItem('last_notify_date', todayStr);
+      sendNotification(
+        '📓 ডায়েরি দেওয়ার সময়!',
+        `${currentUser} ভাই, আজকের ডায়েরি এখনো পাঠানো হয়নি। এখনই দিন!`
+      );
+    }
+  }
+}
+
+setToday();
+CLASS_NAMES.forEach((_,cls) => loadAutoSaved(cls));
+renderTable();
+renderDutyBanner();
+renderTeacherList();
+updateOnlineStatus();
+renderPending();
+// আজকের নোটিশ load করি
+(function(){
+  const today = new Date();
+  const m = String(today.getMonth()+1).padStart(2,'0');
+  const d = String(today.getDate()).padStart(2,'0');
+  const todayStr = today.getFullYear()+'-'+m+'-'+d;
+  const savedNotice = localStorage.getItem('diary_notice_' + todayStr);
+  if(savedNotice) document.getElementById('notice-text').value = savedNotice;
+})();
+// আজকের নোটিশ load
+(function(){
+  const dateStr = document.getElementById('diary-date')?.value || '';
+  if(dateStr){
+    const saved = localStorage.getItem('diary_notice_' + dateStr);
+    if(saved) document.getElementById('notice-text').value = saved;
+  }
+})();
+checkLogin();
+setTimeout(checkAndNotify, 5000);
+</script>
+<script>
+const manifestData = {
+  "name": "মাদ্রাসা ডায়েরি",
+  "short_name": "ডায়েরি",
+  "description": "মাদ্রাসার দৈনিক ডায়েরি অ্যাপ",
+  "start_url": "./madrasa-diary.html",
+  "display": "standalone",
+  "background_color": "#f5faf7",
+  "theme_color": "#1a6b3c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2541/2541979.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2541/2541979.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+;
+const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+const manifestURL = URL.createObjectURL(blob);
+const linkEl = document.createElement('link');
+linkEl.rel = 'manifest';
+linkEl.href = manifestURL;
+document.head.appendChild(linkEl);
+</script>
+<script>
+if('serviceWorker' in navigator) {
+  const swCode = `const CACHE_NAME = 'madrasa-diary-v1';
+const FILES = ['./madrasa-diary.html', './manifest.json'];
+
+// Install: cache files
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES))
+  );
+  self.skipWaiting();
+});
+
+// Activate: clean old caches
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+// Fetch: serve from cache
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request))
+  );
+});
+
+// Push notification
+self.addEventListener('push', e => {
+  const data = e.data ? e.data.json() : {};
+  e.waitUntil(
+    self.registration.showNotification(data.title || '📓 মাদ্রাসা ডায়েরি', {
+      body: data.body || 'ডায়েরি দেওয়ার সময় হয়েছে!',
+      icon: 'https://cdn-icons-png.flaticon.com/512/2541/2541979.png',
+      badge: 'https://cdn-icons-png.flaticon.com/512/2541/2541979.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true
+    })
+  );
+});
+
+// Background sync / scheduled check
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(clients.openWindow('./madrasa-diary.html'));
+});
+
+// Check time and notify (called from main app)
+self.addEventListener('message', e => {
+  if(e.data && e.data.type === 'CHECK_NOTIFY') {
+    const now = new Date();
+    const hour = now.getHours();
+    if(hour >= 17) {
+      self.registration.showNotification('📓 ডায়েরি দেওয়ার সময়!', {
+        body: e.data.teacher + ' ভাই, আজকের ডায়েরি পাঠান!',
+        icon: 'https://cdn-icons-png.flaticon.com/512/2541/2541979.png',
+        vibrate: [200, 100, 200],
+        requireInteraction: true,
+        tag: 'diary-reminder'
+      });
+    }
+  }
+});
+
+// Periodic background sync (if supported)
+self.addEventListener('periodicsync', e => {
+  if(e.tag === 'diary-check') {
+    e.waitUntil(checkAndNotifyBG());
+  }
+});
+
+async function checkAndNotifyBG() {
+  const now = new Date();
+  const hour = now.getHours();
+  if(hour >= 17) {
+    await self.registration.showNotification('📓 ডায়েরি দেওয়ার সময়!', {
+      body: 'আজকের ডায়েরি এখনো পাঠানো হয়নি!',
+      icon: 'https://cdn-icons-png.flaticon.com/512/2541/2541979.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: 'diary-reminder'
+    });
+  }
+}
+`;
+  const swBlob = new Blob([swCode], {type: 'application/javascript'});
+  const swURL = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL).then(reg => {
+    console.log('SW registered');
+  }).catch(err => console.log('SW error:', err));
+}
+</script>
+</body>
+</html>
