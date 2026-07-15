@@ -255,7 +255,57 @@ body { font-family: 'Hind Siliguri', sans-serif; background: var(--bg); color: v
         await setDoc(docRef, entry);
         console.log('Firebase save ok:', key);
       } catch(e) {
-        console.warn('Firebase save failed:', e);
+        console.warn('Firebase save failed, queueing for background sync:', e);
+        window.queuePendingSave(dateStr, cls, entry);
+      }
+    };
+
+    // Internet না থাকলে/সেভ ব্যর্থ হলে entry গুলো localStorage queue তে রাখা
+    window.queuePendingSave = function(dateStr, cls, entry) {
+      try {
+        const queueKey = 'pending_sync_queue';
+        const queue = JSON.parse(localStorage.getItem(queueKey) || '[]');
+        // একই date+cls এর আগের pending entry থাকলে replace করি (নতুনটাই রাখব)
+        const filtered = queue.filter(q => !(q.dateStr === dateStr && q.cls === cls));
+        filtered.push({ dateStr, cls, entry, queuedAt: new Date().toISOString() });
+        localStorage.setItem(queueKey, JSON.stringify(filtered));
+        console.log('Queued for later sync:', dateStr, cls);
+
+        // Background Sync register করি (সাপোর্ট থাকলে internet ফিরলেই জেগে উঠবে)
+        if('serviceWorker' in navigator && 'SyncManager' in window) {
+          navigator.serviceWorker.ready.then(reg => {
+            reg.sync.register('diary-sync').catch(err => console.warn('Sync register failed:', err));
+          });
+        }
+      } catch(err) {
+        console.warn('Queue save failed:', err);
+      }
+    };
+
+    // Pending queue থেকে সব entry Firestore এ পাঠানোর চেষ্টা (internet ফিরলে বা app খুললে)
+    window.processPendingQueue = async function() {
+      try {
+        const queueKey = 'pending_sync_queue';
+        const queue = JSON.parse(localStorage.getItem(queueKey) || '[]');
+        if(queue.length === 0) return;
+
+        const stillPending = [];
+        for(const item of queue) {
+          try {
+            const key = `${item.dateStr}_${item.cls}`;
+            await setDoc(doc(db, 'diary', key), item.entry);
+            console.log('Synced pending entry:', key);
+          } catch(e) {
+            console.warn('Retry failed, keeping in queue:', e);
+            stillPending.push(item);
+          }
+        }
+        localStorage.setItem(queueKey, JSON.stringify(stillPending));
+        if(stillPending.length === 0 && queue.length > 0) {
+          console.log('✅ সব pending ডাটা sync হয়ে গেছে!');
+        }
+      } catch(err) {
+        console.warn('Process queue failed:', err);
       }
     };
 
@@ -441,6 +491,25 @@ body { font-family: 'Hind Siliguri', sans-serif; background: var(--bg); color: v
       window.firebaseListenTeachers();
       window.firebaseListenSubjectAssignments();
       window.firebaseListenRotationTeachers();
+
+      // App খোলার সাথে সাথে pending (আগে sync না হওয়া) ডাটা পাঠানোর চেষ্টা
+      window.processPendingQueue();
+
+      // Internet ফিরে এলে (app খোলা থাকা অবস্থায়) সাথে সাথে sync করার চেষ্টা
+      window.addEventListener('online', () => {
+        console.log('Internet ফিরে এসেছে, pending ডাটা sync করা হচ্ছে...');
+        window.processPendingQueue();
+      });
+
+      // Service Worker থেকে Background Sync signal পেলে queue process করি
+      if('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (e) => {
+          if(e.data && e.data.type === 'PROCESS_PENDING_QUEUE') {
+            window.processPendingQueue();
+          }
+        });
+      }
+
       const dateEl = document.getElementById('diary-date');
       if(!dateEl) return;
       const dateStr = dateEl.value || new Date().toISOString().slice(0,10);
