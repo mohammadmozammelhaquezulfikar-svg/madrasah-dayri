@@ -57,6 +57,29 @@ self.addEventListener('fetch', e => {
   );
 });
 
+// Background Sync — internet ফিরে এলে app বন্ধ থাকলেও জাগবে
+self.addEventListener('sync', e => {
+  if (e.tag === 'diary-sync') {
+    e.waitUntil(notifyClientsToSync());
+  }
+});
+
+async function notifyClientsToSync() {
+  const allClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+  if (allClients.length > 0) {
+    // App খোলা আছে (foreground/background tab) — সরাসরি message পাঠাই
+    allClients.forEach(client => client.postMessage({ type: 'PROCESS_PENDING_QUEUE' }));
+  } else {
+    // App সম্পূর্ণ বন্ধ — একটা notification দেখাই যাতে ব্যবহারকারী app খুলে sync সম্পন্ন করতে পারেন
+    await self.registration.showNotification('📓 মাদ্রাসা ডায়েরি', {
+      body: 'ইন্টারনেট ফিরে এসেছে। আপনার ডায়েরি পাঠাতে অ্যাপ খুলুন।',
+      icon: 'https://cdn-icons-png.flaticon.com/512/2541/2541979.png',
+      vibrate: [200, 100, 200],
+      tag: 'sync-reminder'
+    });
+  }
+}
+
 // Push notification (FCM background push এর জন্য firebase-messaging-sw.js আলাদা আছে)
 self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : {};
